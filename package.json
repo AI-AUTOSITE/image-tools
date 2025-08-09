@@ -9,8 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/supabase-js": "^2.54.0",
     "browser-image-compression": "^2.0.2",
+    "cookies-next": "^6.1.0",
+    "date-fns": "^4.1.0",
     "lucide-react": "^0.539.0",
     "next": "15.4.6",
     "react": "19.1.0",
