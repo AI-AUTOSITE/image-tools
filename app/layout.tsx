@@ -30,7 +30,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          {/* Navigation Bar */}
+          {/* Navigation Bar - 必ず表示される */}
           <nav className="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-100">
             <div className="max-w-7xl mx-auto px-4 py-4">
               <div className="flex items-center justify-between">
@@ -55,7 +55,7 @@ export default function RootLayout({
                   </div>
                 </div>
                 
-                {/* Right side - Auth Button */}
+                {/* Right side - Auth Button Component */}
                 <div className="flex items-center">
                   <AuthButton />
                 </div>
@@ -63,7 +63,7 @@ export default function RootLayout({
             </div>
           </nav>
           
-          {/* Main Content */}
+          {/* Main Content Area */}
           <main className="min-h-screen">
             {children}
           </main>
