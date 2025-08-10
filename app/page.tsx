@@ -13,14 +13,14 @@ export default function HomePage() {
       available: true,
     },
     {
-      title: 'Image Resizer',
-      description: 'Change dimensions instantly',
-      icon: <Maximize2 className="w-8 h-8" />,
-      href: '/resize',
-      badge: 'Coming Soon',
-      color: 'bg-purple-500',
-      available: false,
-    },
+  title: 'Image Resizer',
+  description: 'Change dimensions instantly',
+  icon: <Maximize2 className="w-8 h-8" />,
+  href: '/resize',
+  badge: 'New!', // Coming Soon → New!
+  color: 'bg-purple-500',
+  available: true, // false → true
+},
     {
       title: 'Format Converter',
       description: 'JPG, PNG, WebP, and more',
