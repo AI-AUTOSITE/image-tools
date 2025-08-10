@@ -21,15 +21,15 @@ export default function HomePage() {
   color: 'bg-purple-500',
   available: true, // false → true
 },
-    {
-      title: 'Format Converter',
-      description: 'JPG, PNG, WebP, and more',
-      icon: <RefreshCw className="w-8 h-8" />,
-      href: '/convert',
-      badge: 'Coming Soon',
-      color: 'bg-green-500',
-      available: false,
-    },
+{
+  title: 'Format Converter',
+  description: 'JPG, PNG, WebP, and more',
+  icon: <RefreshCw className="w-8 h-8" />,
+  href: '/convert',
+  badge: 'New!', // Coming Soon → New!
+  color: 'bg-green-500',
+  available: true, // false → true
+},
   ]
 
   const features = [
