@@ -4,6 +4,8 @@
 import ImageResizer from '@/components/ImageResizer'
 import Link from 'next/link'
 import { Home } from 'lucide-react'
+import { redirect } from 'next/navigation'
+
 
 export const metadata = {
   title: 'Free Image Resizer - Resize Images Online | No Limits',
@@ -12,6 +14,7 @@ export const metadata = {
 }
 
 export default function ResizePage() {
+    redirect('/tools/compress')
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Navigation */}

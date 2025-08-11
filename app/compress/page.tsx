@@ -5,6 +5,7 @@
 import ImageCompressor from '@/components/ImageCompressor'
 import Link from 'next/link'
 import { Home } from 'lucide-react'
+import { redirect } from 'next/navigation'
 
 export const metadata = {
   title: 'Free Image Compressor - No Limits | Compress JPG, PNG, WebP',
@@ -12,6 +13,7 @@ export const metadata = {
 }
 
 export default function CompressPage() {
+    redirect('/tools/compress')
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Navigation */}

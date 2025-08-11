@@ -1,6 +1,6 @@
 
 // ===================================
-// 3. app/tools/[toolId]/page.tsx - 動的ツールページ
+// 4. app/tools/[toolId]/page.tsx - 動的ツールページ
 // ===================================
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -8,9 +8,11 @@ import { Home } from 'lucide-react'
 import UniversalToolWrapper from '@/components/UniversalToolWrapper'
 import { toolRegistry } from '@/lib/tool-registry'
 
+// 初期化（重要！）
+import '@/lib/tools/existing-tools'
+
 export async function generateStaticParams() {
-  // すべてのツールIDを返す
-  return toolRegistry.getEnabledTools().map((tool) => ({
+  return toolRegistry.getAllTools().map((tool) => ({
     toolId: tool.id,
   }))
 }
@@ -33,28 +35,12 @@ export async function generateMetadata({ params }: { params: { toolId: string } 
 export default function DynamicToolPage({ params }: { params: { toolId: string } }) {
   const tool = toolRegistry.getTool(params.toolId)
 
-  if (!tool || !tool.available) {
+  if (!tool) {
     notFound()
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
-              <Home className="w-5 h-5" />
-              <span className="font-medium">Back to Tools</span>
-            </Link>
-            <div className="text-sm text-gray-500">
-              100% Free • No Registration • Private
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="text-center mb-8">
           <div className={`${tool.color} w-16 h-16 rounded-xl flex items-center justify-center text-white mx-auto mb-4`}>

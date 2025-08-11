@@ -27,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <AuthProvider>
           {/* Navigation Bar - 必ず表示される */}
           <nav className="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-100">
@@ -46,12 +46,18 @@ export default function RootLayout({
                     >
                       Compress
                     </Link>
-                    <span className="text-gray-400 cursor-not-allowed">
-                      Resize (Soon)
-                    </span>
-                    <span className="text-gray-400 cursor-not-allowed">
-                      Convert (Soon)
-                    </span>
+                    <Link 
+                      href="/resize" 
+                      className="text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      Resize
+                    </Link>
+                    <Link 
+                      href="/convert" 
+                      className="text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      Convert
+                    </Link>
                   </div>
                 </div>
                 

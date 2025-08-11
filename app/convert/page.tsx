@@ -5,6 +5,8 @@
 import FormatConverter from '@/components/FormatConverter'
 import Link from 'next/link'
 import { Home } from 'lucide-react'
+import { redirect } from 'next/navigation'
+
 
 export const metadata = {
   title: 'Free Image Format Converter - JPG, PNG, WebP, AVIF | No Limits',
@@ -13,6 +15,7 @@ export const metadata = {
 }
 
 export default function ConvertPage() {
+    redirect('/tools/compress')
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Navigation */}
