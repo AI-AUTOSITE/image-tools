@@ -12,8 +12,15 @@ export async function generateStaticParams() {
   }))
 }
 
-export async function generateMetadata({ params }: { params: { toolId: string } }) {
-  const tool = getToolById(params.toolId)
+// Next.js 15用の型定義
+type Props = {
+  params: Promise<{ toolId: string }>
+}
+
+export async function generateMetadata({ params }: Props) {
+  // Next.js 15ではparamsがPromiseなのでawaitが必要
+  const resolvedParams = await params
+  const tool = getToolById(resolvedParams.toolId)
   
   if (!tool) {
     return {
@@ -27,8 +34,10 @@ export async function generateMetadata({ params }: { params: { toolId: string } 
   }
 }
 
-export default function DynamicToolPage({ params }: { params: { toolId: string } }) {
-  const tool = getToolById(params.toolId)
+export default async function DynamicToolPage({ params }: Props) {
+  // Next.js 15ではparamsがPromiseなのでawaitが必要
+  const resolvedParams = await params
+  const tool = getToolById(resolvedParams.toolId)
 
   if (!tool) {
     notFound()
