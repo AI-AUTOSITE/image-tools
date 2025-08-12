@@ -1,0 +1,290 @@
+# 🎯 Image Tools 完成ロードマップ
+
+## Week 1-2: コアツールの完璧化
+
+### 既存3ツールの改善
+```
+✅ Compress - 完成済み
+✅ Resize - 完成済み  
+✅ Convert - 完成済み
+```
+
+### 追加すべき簡単な3ツール（Canvas APIで実装可能）
+```
+🔧 Crop - 切り抜き（3日で実装可能）
+🔧 Rotate - 回転（1日で実装可能）
+🔧 Flip - 反転（1日で実装可能）
+```
+
+**合計6ツール** → ユーザーが選べる最適な数
+
+---
+
+## Week 3: ユーザー管理システム
+
+### 3段階ユーザーシステムの実装
+```typescript
+// Supabase Schema
+CREATE TABLE users (
+  id UUID PRIMARY KEY,
+  email TEXT UNIQUE,
+  tier TEXT DEFAULT 'free', -- guest/free/pro
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE usage_logs (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
+  tool_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+// 日次使用量リセット
+CREATE OR REPLACE FUNCTION reset_daily_usage()
+RETURNS void AS $$
+BEGIN
+  -- 毎日0時にリセット
+  UPDATE users SET daily_usage = 0;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### 使用制限の実装
+```typescript
+const TIER_LIMITS = {
+  guest: {
+    daily: 3,      // ゲスト：3回/日
+    storage: false, // 保存不可
+    priority: 0     // 処理優先度：低
+  },
+  free: {
+    daily: 10,      // 無料：10回/日
+    storage: true,  // 設定保存可能
+    priority: 1     // 処理優先度：中
+  },
+  pro: {
+    daily: Infinity, // プロ：無制限
+    storage: true,   // 設定保存可能
+    priority: 2      // 処理優先度：高
+  }
+}
+```
+
+---
+
+## Week 4: 収益化システム
+
+### Stripe統合
+```typescript
+// 料金プラン
+const PRICING = {
+  monthly: {
+    price: 900,  // $9/月
+    id: 'price_xxx'
+  },
+  yearly: {
+    price: 7200, // $72/年（20%割引）
+    id: 'price_yyy'
+  }
+}
+
+// Webhook処理
+app.post('/api/stripe/webhook', async (req, res) => {
+  const event = stripe.webhooks.constructEvent(...)
+  
+  switch(event.type) {
+    case 'customer.subscription.created':
+      // ユーザーをProにアップグレード
+      break
+    case 'customer.subscription.deleted':
+      // ユーザーをFreeにダウングレード
+      break
+  }
+})
+```
+
+---
+
+## 🎨 UI/UX最終調整
+
+### ホームページ構成（シンプル版）
+```
+Hero Section
+├── "Professional Image Tools"
+├── "No uploads. 100% private."
+└── [Start Free] [Sign in]
+
+Tools Grid (6 tools)
+├── Compress
+├── Resize
+├── Convert
+├── Crop
+├── Rotate
+└── Flip
+
+Trust Indicators
+├── "100% Private"
+├── "No Registration Required"
+└── "Works Offline"
+
+Pricing (Simple)
+├── Free: 10 uses/day
+└── Pro: $9/month unlimited
+```
+
+---
+
+## 📊 成功指標（KPI）
+
+### Month 1 目標
+- 日間アクティブユーザー: 100人
+- 無料登録率: 20%
+- 有料転換率: 5%
+- 月間収益: $100
+
+### Month 3 目標
+- 日間アクティブユーザー: 1,000人
+- 無料登録率: 25%
+- 有料転換率: 8%
+- 月間収益: $720
+
+### Month 6 目標
+- 日間アクティブユーザー: 5,000人
+- 無料登録率: 30%
+- 有料転換率: 10%
+- 月間収益: $4,500
+
+---
+
+## 🚀 Phase 2 準備（Month 2-3）
+
+### 次サイト候補評価
+
+#### Option A: pdf-tools.ai-autosite.com
+**メリット:**
+- ビジネスユーザー多い（高収益）
+- 実装が簡単（pdf-lib使用）
+- 競合が少ない
+
+**必須ツール:**
+1. Merge PDFs
+2. Split PDF
+3. Compress PDF
+4. PDF to Image
+5. Image to PDF
+6. Rotate Pages
+
+#### Option B: converter-hub.ai-autosite.com  
+**メリット:**
+- SEO流入が多い
+- 実装が簡単
+- 汎用性が高い
+
+**必須ツール:**
+1. Image Converter
+2. Audio Converter
+3. Video Converter
+4. Document Converter
+5. Font Converter
+6. Data Converter
+
+---
+
+## 🏗️ 技術基盤の準備
+
+### モノレポ構成への移行
+```bash
+# Turborepoセットアップ
+npx create-turbo@latest tool-sites
+
+tool-sites/
+├── apps/
+│   ├── image-tools/    # 現在のプロジェクト
+│   └── pdf-tools/      # 次のプロジェクト
+├── packages/
+│   ├── ui/            # 共通UIコンポーネント
+│   ├── auth/          # 認証ロジック
+│   ├── billing/       # 課金ロジック
+│   └── config/        # 共通設定
+└── turbo.json
+```
+
+### 共通コンポーネント抽出
+```typescript
+// packages/ui/src/ToolWrapper.tsx
+export const ToolWrapper = ({ 
+  tool,
+  onProcess,
+  limits 
+}) => {
+  // 全サイト共通のツールラッパー
+}
+
+// packages/auth/src/useAuth.tsx
+export const useAuth = () => {
+  // 統一認証フック
+}
+
+// packages/billing/src/useBilling.tsx
+export const useBilling = () => {
+  // 統一課金フック
+}
+```
+
+---
+
+## ✅ 今週のアクションアイテム
+
+### Day 1-2
+- [ ] Crop ツールの実装
+- [ ] Rotate ツールの実装
+- [ ] Flip ツールの実装
+
+### Day 3-4
+- [ ] Supabaseセットアップ
+- [ ] ユーザー認証実装
+- [ ] 使用量トラッキング
+
+### Day 5-7
+- [ ] Stripe統合
+- [ ] 料金プランページ
+- [ ] アップグレードフロー
+
+---
+
+## 📈 マーケティング戦略
+
+### SEO対策
+```
+Target Keywords:
+- "free image compressor"
+- "online image resizer"
+- "image converter no upload"
+- "private image tools"
+- "browser image editor"
+```
+
+### コンテンツマーケティング
+- ブログ記事（週1本）
+- 使い方動画（月2本）
+- SNS投稿（日1回）
+
+### 初期ユーザー獲得
+1. Product Hunt投稿
+2. Reddit関連コミュニティ
+3. Hacker News
+4. IndieHackers
+
+---
+
+## 🎯 成功の定義
+
+### image-tools成功基準
+✅ 6つのツールが完璧に動作
+✅ 3段階ユーザーシステム稼働
+✅ Stripe決済が機能
+✅ 月間$500の収益達成
+✅ ユーザー満足度90%以上
+
+**これらを達成したら、次のサイトへ展開！**

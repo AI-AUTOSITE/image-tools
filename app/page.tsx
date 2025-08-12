@@ -1,390 +1,454 @@
-// app/page.tsx - 拡張版ホームページ（15以上のツール）
+// app/page.tsx - 6 tools homepage
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { 
-  Zap, Maximize2, RefreshCw, Crop, RotateCw, Droplets,
-  Palette, Type, Grid3x3, FlipHorizontal, Image as ImageIcon,
-  Circle, Layers, Eraser, Wand2, Sun, Moon, 
-  Filter, Move, Scissors, Shield, Eye, Camera
-} from 'lucide-react'
+import { Settings, Check, ChevronRight, Star, Sparkles, Grid, List } from 'lucide-react'
+import { useAuth } from '@/components/AuthProvider'
+import { getAvailableTools } from '@/lib/tools/existing-tools'
 
 export default function HomePage() {
-  const tools = [
-    // Essential Tools (既存)
-    {
-      title: 'Image Compressor',
-      description: 'Reduce file size without quality loss',
-      icon: <Zap className="w-8 h-8" />,
-      href: '/compress',
-      badge: 'Popular',
-      color: 'bg-blue-500',
-      available: true,
-      category: 'Essential'
-    },
-    {
-      title: 'Image Resizer',
-      description: 'Change dimensions instantly',
-      icon: <Maximize2 className="w-8 h-8" />,
-      href: '/resize',
-      badge: null,
-      color: 'bg-purple-500',
-      available: true,
-      category: 'Essential'
-    },
-    {
-      title: 'Format Converter',
-      description: 'JPG, PNG, WebP, AVIF, and more',
-      icon: <RefreshCw className="w-8 h-8" />,
-      href: '/convert',
-      badge: null,
-      color: 'bg-green-500',
-      available: true,
-      category: 'Essential'
-    },
+  const { user, isPremium } = useAuth()
+  const [visibleTools, setVisibleTools] = useState<string[]>([])
+  const [showCustomizer, setShowCustomizer] = useState(false)
+  const [dailyUsage, setDailyUsage] = useState<Record<string, number>>({})
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [maxToolsToShow, setMaxToolsToShow] = useState(6) // デフォルト6個表示
 
-    // Transform Tools
-    {
-      title: 'Image Cropper',
-      description: 'Crop to any size or ratio',
-      icon: <Crop className="w-8 h-8" />,
-      href: '/crop',
-      badge: 'New',
-      color: 'bg-orange-500',
-      available: true,
-      category: 'Transform'
-    },
-    {
-      title: 'Image Rotator',
-      description: 'Rotate by any angle',
-      icon: <RotateCw className="w-8 h-8" />,
-      href: '/rotate',
-      badge: null,
-      color: 'bg-indigo-500',
-      available: true,
-      category: 'Transform'
-    },
-    {
-      title: 'Image Flipper',
-      description: 'Flip horizontal or vertical',
-      icon: <FlipHorizontal className="w-8 h-8" />,
-      href: '/flip',
-      badge: null,
-      color: 'bg-pink-500',
-      available: true,
-      category: 'Transform'
-    },
+  const availableTools = getAvailableTools() // 利用可能なツールのみ取得
 
-    // Enhance Tools
-    {
-      title: 'Blur Image',
-      description: 'Add blur effects',
-      icon: <Droplets className="w-8 h-8" />,
-      href: '/blur',
-      badge: null,
-      color: 'bg-cyan-500',
-      available: true,
-      category: 'Enhance'
-    },
-    {
-      title: 'Sharpen Image',
-      description: 'Make images crisp and clear',
-      icon: <Wand2 className="w-8 h-8" />,
-      href: '/sharpen',
-      badge: null,
-      color: 'bg-red-500',
-      available: true,
-      category: 'Enhance'
-    },
-    {
-      title: 'Brightness Adjust',
-      description: 'Control brightness and contrast',
-      icon: <Sun className="w-8 h-8" />,
-      href: '/brightness',
-      badge: null,
-      color: 'bg-yellow-500',
-      available: true,
-      category: 'Enhance'
-    },
+  useEffect(() => {
+    // Load user preferences
+    const saved = localStorage.getItem('visible-tools')
+    const savedMax = localStorage.getItem('max-tools-display')
+    
+    if (saved) {
+      const savedTools = JSON.parse(saved)
+      // 利用可能なツールのみフィルタリング
+      const validTools = savedTools.filter((id: string) => 
+        availableTools.some(tool => tool.id === id)
+      )
+      setVisibleTools(validTools)
+    } else {
+      // デフォルト: 利用可能な全ツールを表示
+      setVisibleTools(availableTools.map(t => t.id))
+    }
 
-    // Style Tools
-    {
-      title: 'Grayscale',
-      description: 'Convert to black and white',
-      icon: <Moon className="w-8 h-8" />,
-      href: '/grayscale',
-      badge: null,
-      color: 'bg-gray-600',
-      available: true,
-      category: 'Style'
-    },
-    {
-      title: 'Color Filter',
-      description: 'Apply color filters',
-      icon: <Palette className="w-8 h-8" />,
-      href: '/filter',
-      badge: 'Hot',
-      color: 'bg-gradient-to-br from-red-500 to-yellow-500',
-      available: true,
-      category: 'Style'
-    },
-    {
-      title: 'Vintage Effect',
-      description: 'Add retro film effects',
-      icon: <Camera className="w-8 h-8" />,
-      href: '/vintage',
-      badge: null,
-      color: 'bg-amber-600',
-      available: true,
-      category: 'Style'
-    },
+    if (savedMax) {
+      setMaxToolsToShow(parseInt(savedMax))
+    }
 
-    // Creative Tools
-    {
-      title: 'Add Text',
-      description: 'Add text to images',
-      icon: <Type className="w-8 h-8" />,
-      href: '/text',
-      badge: 'Premium',
-      color: 'bg-teal-500',
-      available: true,
-      category: 'Creative'
-    },
-    {
-      title: 'Image Grid',
-      description: 'Create photo collages',
-      icon: <Grid3x3 className="w-8 h-8" />,
-      href: '/grid',
-      badge: null,
-      color: 'bg-lime-500',
-      available: true,
-      category: 'Creative'
-    },
-    {
-      title: 'Round Corners',
-      description: 'Add rounded corners',
-      icon: <Circle className="w-8 h-8" />,
-      href: '/round',
-      badge: null,
-      color: 'bg-violet-500',
-      available: true,
-      category: 'Creative'
-    },
+    // Load daily usage
+    const usage = localStorage.getItem('daily-usage')
+    if (usage) {
+      const parsed = JSON.parse(usage)
+      const today = new Date().toDateString()
+      if (parsed.date === today) {
+        setDailyUsage(parsed.usage)
+      } else {
+        // Reset daily usage
+        const resetUsage: Record<string, number> = {}
+        availableTools.forEach(tool => { resetUsage[tool.id] = 0 })
+        localStorage.setItem('daily-usage', JSON.stringify({ date: today, usage: resetUsage }))
+        setDailyUsage(resetUsage)
+      }
+    }
+  }, [])
 
-    // Advanced Tools
-    {
-      title: 'Background Remover',
-      description: 'Remove image background',
-      icon: <Eraser className="w-8 h-8" />,
-      href: '/remove-bg',
-      badge: 'AI Premium',
-      color: 'bg-gradient-to-br from-purple-500 to-pink-500',
-      available: true,
-      category: 'Advanced'
-    },
-    {
-      title: 'Image Upscaler',
-      description: 'Enhance resolution with AI',
-      icon: <Wand2 className="w-8 h-8" />,
-      href: '/upscale',
-      badge: 'AI Premium',
-      color: 'bg-gradient-to-br from-blue-500 to-purple-500',
-      available: true,
-      category: 'Advanced'
-    },
-    {
-      title: 'Watermark',
-      description: 'Add or remove watermarks',
-      icon: <Shield className="w-8 h-8" />,
-      href: '/watermark',
-      badge: null,
-      color: 'bg-slate-600',
-      available: true,
-      category: 'Advanced'
-    },
-  ]
+  const toggleTool = (toolId: string) => {
+    let newVisible = [...visibleTools]
+    
+    if (visibleTools.includes(toolId)) {
+      // Remove tool
+      newVisible = visibleTools.filter(id => id !== toolId)
+    } else {
+      // Add tool
+      newVisible = [...visibleTools, toolId]
+    }
+    
+    setVisibleTools(newVisible)
+    localStorage.setItem('visible-tools', JSON.stringify(newVisible))
+  }
 
-  const categories = [
-    { name: 'Essential', description: 'Core image tools', icon: <Zap className="w-5 h-5" /> },
-    { name: 'Transform', description: 'Resize, crop, rotate', icon: <Move className="w-5 h-5" /> },
-    { name: 'Enhance', description: 'Improve image quality', icon: <Wand2 className="w-5 h-5" /> },
-    { name: 'Style', description: 'Filters and effects', icon: <Palette className="w-5 h-5" /> },
-    { name: 'Creative', description: 'Add elements', icon: <Type className="w-5 h-5" /> },
-    { name: 'Advanced', description: 'AI-powered tools', icon: <Wand2 className="w-5 h-5" /> },
-  ]
+  const getUserTier = () => {
+    if (isPremium) return 'Pro'
+    if (user) return 'Free'
+    return 'Guest'
+  }
 
-  const features = [
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: '100% Private',
-      description: 'Files never leave your browser'
-    },
-    {
-      icon: <Zap className="w-6 h-6" />,
-      title: 'Lightning Fast',
-      description: 'Process images instantly'
-    },
-    {
-      icon: <ImageIcon className="w-6 h-6" />,
-      title: 'Batch Processing',
-      description: 'Handle multiple files at once'
-    },
-  ]
+  const displayedTools = availableTools.filter(tool => visibleTools.includes(tool.id))
+    .slice(0, maxToolsToShow)
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 pt-16 pb-8">
-        <div className="text-center">
-          <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-4">
-            <Zap className="w-4 h-4 mr-1" />
-            15+ Free Tools Available
-          </div>
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">
-            Free Image Tools
-          </h1>
-          <p className="text-xl text-gray-600 mb-2 max-w-2xl mx-auto">
-            Professional image editing in your browser. No uploads, no registration, no limits.
-          </p>
-          <p className="text-sm text-gray-500">
-            Your images stay on your device. 100% private, 100% free.
-          </p>
-        </div>
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="text-center">
+            {/* User Status Badge */}
+            <div className="inline-flex items-center px-4 py-2 mb-6 rounded-full text-sm font-medium
+              bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200">
+              <Sparkles className="w-4 h-4 mr-2" />
+              {getUserTier()} Account
+              {!isPremium && user && (
+                <Link href="/upgrade" className="ml-3 text-purple-600 hover:text-purple-700 font-semibold">
+                  Upgrade →
+                </Link>
+              )}
+            </div>
 
-        {/* Quick Stats */}
-        <div className="flex justify-center gap-8 mt-8 text-center">
-          <div>
-            <div className="text-3xl font-bold text-gray-900">15+</div>
-            <div className="text-sm text-gray-600">Tools</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-gray-900">∞</div>
-            <div className="text-sm text-gray-600">File Size</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-gray-900">$0</div>
-            <div className="text-sm text-gray-600">Forever</div>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Simple Image Tools
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              6 professional tools. No uploads. Your images stay on your device.
+            </p>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-3 gap-6 max-w-xl mx-auto mt-8">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">100%</div>
+                <div className="text-xs text-gray-500">Private</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  {getUserTier() === 'Pro' ? '∞' : getUserTier() === 'Free' ? '10/day' : '3/day'}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {getUserTier() === 'Pro' ? 'Unlimited' : 'Per Tool'}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  {availableTools.length}
+                </div>
+                <div className="text-xs text-gray-500">Active Tools</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Tools by Category */}
-      <div className="max-w-7xl mx-auto px-4 pb-20">
-        {categories.map((category) => (
-          <div key={category.name} className="mb-12">
-            <div className="flex items-center mb-6">
-              <div className="flex items-center space-x-2 text-gray-700">
-                {category.icon}
-                <h2 className="text-2xl font-bold">{category.name}</h2>
-              </div>
-              <span className="ml-4 text-sm text-gray-500">{category.description}</span>
+      {/* Toolbar */}
+      <div className="sticky top-0 z-30 bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-500">
+                Showing {displayedTools.length} of {availableTools.length} tools
+              </span>
+              {/* Max tools selector */}
+              <select
+                value={maxToolsToShow}
+                onChange={(e) => {
+                  const max = parseInt(e.target.value)
+                  setMaxToolsToShow(max)
+                  localStorage.setItem('max-tools-display', max.toString())
+                }}
+                className="text-sm border border-gray-300 rounded px-2 py-1"
+              >
+                <option value="3">Show 3 tools</option>
+                <option value="6">Show 6 tools</option>
+                {availableTools.length >= 9 && <option value="9">Show 9 tools</option>}
+                {availableTools.length >= 12 && <option value="12">Show 12 tools</option>}
+              </select>
             </div>
-            
-            <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {tools
-                .filter(tool => tool.category === category.name)
-                .map((tool) => (
-                  tool.available ? (
-                    <Link
-                      key={tool.href}
-                      href={tool.href}
-                      className="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-200 p-6 border border-gray-100 hover:scale-105"
-                    >
-                      {tool.badge && (
-                        <span className={`absolute top-3 right-3 px-2 py-1 text-xs font-semibold rounded-full ${
-                          tool.badge === 'Popular' ? 'bg-blue-100 text-blue-600' :
-                          tool.badge === 'New' ? 'bg-green-100 text-green-600' :
-                          tool.badge === 'Hot' ? 'bg-red-100 text-red-600' :
-                          tool.badge.includes('Premium') ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
-                          {tool.badge}
-                        </span>
-                      )}
-                      <div className={`${tool.color} w-12 h-12 rounded-lg flex items-center justify-center text-white mb-3 group-hover:scale-110 transition-transform`}>
-                        {tool.icon}
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        {tool.title}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {tool.description}
-                      </p>
-                    </Link>
-                  ) : (
-                    <div
-                      key={tool.href}
-                      className="relative bg-white/50 rounded-xl shadow-sm p-6 border border-gray-200 opacity-60 cursor-not-allowed"
-                    >
-                      <span className="absolute top-3 right-3 px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-500 rounded-full">
-                        Coming Soon
-                      </span>
-                      <div className={`${tool.color} w-12 h-12 rounded-lg flex items-center justify-center text-white mb-3 opacity-50`}>
-                        {tool.icon}
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-500 mb-1">
-                        {tool.title}
-                      </h3>
-                      <p className="text-sm text-gray-400">
-                        {tool.description}
-                      </p>
-                    </div>
-                  )
-                ))}
+            <div className="flex items-center space-x-3">
+              {/* View Mode Toggle */}
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+                  title="Grid view"
+                >
+                  <Grid className="w-4 h-4 text-gray-600" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+                  title="List view"
+                >
+                  <List className="w-4 h-4 text-gray-600" />
+                </button>
+              </div>
+              
+              {/* Customize Button */}
+              <button
+                onClick={() => setShowCustomizer(!showCustomizer)}
+                className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-gray-700"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Customize
+              </button>
             </div>
           </div>
-        ))}
+        </div>
+      </div>
+
+      {/* Customizer Panel */}
+      {showCustomizer && (
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Choose Your Tools
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Select which tools to display. {visibleTools.length} selected
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCustomizer(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Available Tools */}
+            <div className="grid md:grid-cols-2 gap-3">
+              {availableTools.map(tool => (
+                <label
+                  key={tool.id}
+                  className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md`}
+                  style={{
+                    borderColor: visibleTools.includes(tool.id) ? '#3b82f6' : '#e5e7eb',
+                    backgroundColor: visibleTools.includes(tool.id) ? '#eff6ff' : 'white'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={visibleTools.includes(tool.id)}
+                    onChange={() => toggleTool(tool.id)}
+                    className="sr-only"
+                  />
+                  <div className={`${tool.color} w-8 h-8 rounded flex items-center justify-center text-white mr-3 text-xs`}>
+                    {tool.icon}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-gray-900">{tool.name}</p>
+                    <p className="text-xs text-gray-500">{tool.description}</p>
+                  </div>
+                  <div className="ml-2">
+                    {visibleTools.includes(tool.id) ? (
+                      <Check className="w-5 h-5 text-blue-600" />
+                    ) : (
+                      <div className="w-5 h-5 border-2 border-gray-300 rounded" />
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Tools Display */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {displayedTools.length > 0 ? (
+          <div className={
+            viewMode === 'grid' 
+              ? `grid gap-6 ${
+                  maxToolsToShow <= 3 ? 'md:grid-cols-3' :
+                  maxToolsToShow <= 6 ? 'md:grid-cols-3 lg:grid-cols-3' :
+                  'md:grid-cols-3 lg:grid-cols-4'
+                }`
+              : 'space-y-4'
+          }>
+            {displayedTools.map(tool => {
+              const usage = dailyUsage[tool.id] || 0
+              const limit = isPremium ? null : (user ? 10 : 3)
+              const remaining = limit ? limit - usage : null
+              
+              return (
+                <ToolCard
+                  key={tool.id}
+                  tool={tool}
+                  usage={usage}
+                  limit={limit}
+                  remaining={remaining}
+                  isPremium={isPremium}
+                  viewMode={viewMode}
+                  getUserTier={getUserTier}
+                />
+              )
+            })}
+          </div>
+        ) : (
+          <EmptyState onCustomize={() => setShowCustomizer(true)} />
+        )}
       </div>
 
       {/* Features Section */}
-      <div className="bg-white py-16">
+      <div className="bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
             Why Choose Our Tools?
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div key={index} className="text-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white mx-auto mb-4">
-                  {feature.icon}
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {feature.description}
-                </p>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Star className="w-8 h-8 text-blue-600" />
               </div>
-            ))}
+              <h3 className="font-semibold text-gray-900 mb-2">100% Privacy</h3>
+              <p className="text-sm text-gray-600">
+                All processing happens in your browser. Your images never leave your device.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">No Sign-up Required</h3>
+              <p className="text-sm text-gray-600">
+                Start using immediately. Sign in only if you want to save preferences or upgrade.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <ChevronRight className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Lightning Fast</h3>
+              <p className="text-sm text-gray-600">
+                Process multiple images in seconds with our optimized algorithms.
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="py-16">
-        <div className="max-w-4xl mx-auto text-center px-4">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Start Editing Now
-          </h2>
-          <p className="text-lg text-gray-600 mb-8">
-            No sign up required. Choose any tool and start editing immediately.
-          </p>
-          <div className="flex justify-center space-x-4">
+      {/* Upgrade CTA */}
+      {!isPremium && user && (
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-12">
+          <div className="max-w-4xl mx-auto px-4 text-center">
+            <h2 className="text-3xl font-bold mb-4">
+              Unlock Unlimited Access
+            </h2>
+            <p className="text-xl mb-8 text-purple-100">
+              Remove all limits with Pro membership
+            </p>
             <Link
-              href="/compress"
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              href="/upgrade"
+              className="inline-flex items-center px-8 py-4 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
-              <Zap className="w-5 h-5 mr-2" />
-              Try Image Compressor
+              Upgrade to Pro - $9/month
+              <ChevronRight className="w-5 h-5 ml-2" />
             </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Tool Card Component
+function ToolCard({ tool, usage, limit, remaining, isPremium, viewMode, getUserTier }: any) {
+  if (viewMode === 'list') {
+    return (
+      <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className={`${tool.color} w-10 h-10 rounded-lg flex items-center justify-center text-white`}>
+              {tool.icon}
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">{tool.name}</h3>
+              <p className="text-sm text-gray-600">{tool.description}</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            {tool.badge && (
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                {tool.badge}
+              </span>
+            )}
             <Link
-              href="/remove-bg"
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
+              href={tool.href}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
             >
-              <Eraser className="w-5 h-5 mr-2" />
-              Try Background Remover
+              Open
             </Link>
           </div>
         </div>
       </div>
+    )
+  }
+
+  // Grid view
+  return (
+    <Link href={tool.href} className="block">
+      <div className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-200 overflow-hidden">
+        <div className="p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className={`${tool.color} w-12 h-12 rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform`}>
+              {tool.icon}
+            </div>
+            {tool.badge && (
+              <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium">
+                {tool.badge}
+              </span>
+            )}
+          </div>
+          
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {tool.name}
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            {tool.description}
+          </p>
+
+          {/* Usage for non-premium users */}
+          {!isPremium && limit && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Today's usage</span>
+                <span className={`font-medium ${remaining && remaining <= 3 ? 'text-orange-600' : 'text-green-600'}`}>
+                  {usage}/{limit}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-1.5">
+                <div 
+                  className={`h-1.5 rounded-full transition-all ${
+                    remaining && remaining <= 3 ? 'bg-orange-500' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min((usage / limit) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {isPremium && (
+            <div className="flex items-center text-xs text-purple-600">
+              <Star className="w-3 h-3 mr-1 fill-current" />
+              Unlimited Usage
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function EmptyState({ onCustomize }: { onCustomize: () => void }) {
+  return (
+    <div className="text-center py-20">
+      <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
+        <Settings className="w-10 h-10 text-gray-400" />
+      </div>
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+        No Tools Selected
+      </h3>
+      <p className="text-gray-600 mb-6">
+        Click the button below to select the tools you need
+      </p>
+      <button
+        onClick={onCustomize}
+        className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        <Settings className="w-5 h-5 mr-2" />
+        Select Tools
+      </button>
     </div>
   )
 }
